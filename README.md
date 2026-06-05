@@ -283,7 +283,7 @@ Planned improvements:
 ## Running Locally
 
 ```bash
-git clone https://github.com/<your-username>/pharmacare-erp.git
+git clone https://github.com/ishaanpadashetty/pharmacare-erp.git
 
 cd pharmacare-erp
 
