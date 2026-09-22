@@ -132,8 +132,8 @@ export function BillingClient() {
     const res = await previewSale(payload);
     setIsPreviewing(false);
     
-    if (res.success) {
-      setPickList(res.pickList);
+    if ("success" in res && res.success) {
+      if ("pickList" in res && res.pickList) setPickList(res.pickList);
       setShowConfirmModal(true);
     } else {
       alert("Failed to generate picklist: " + res.error);
@@ -146,11 +146,12 @@ export function BillingClient() {
     const payload = {
       customerName,
       customerPhone,
-      paymentMode,
+      paymentMode: paymentMode as "cash" | "card" | "upi" | "credit",
       subtotal: calculations.subtotal,
       discount: calculations.discountValue,
       cgst: calculations.cgst,
       sgst: calculations.sgst,
+      igst: 0,
       totalAmount: calculations.totalAmount,
       items: cart.map(c => ({
         productId: c.id,
@@ -164,7 +165,7 @@ export function BillingClient() {
     const res = await createSale(payload);
     setIsSubmitting(false);
     
-    if (res.success) {
+    if ("success" in res && res.success) {
       setShowConfirmModal(false);
       setInvoiceSuccess(res.sale);
       setCart([]);
@@ -172,7 +173,7 @@ export function BillingClient() {
       setCustomerPhone("");
       setDiscountAmount("");
     } else {
-      alert("Failed to create sale: " + res.error);
+      alert("Failed to create sale: " + ("error" in res ? res.error : "Unknown error"));
     }
   };
 

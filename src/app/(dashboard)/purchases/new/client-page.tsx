@@ -110,7 +110,7 @@ export function NewPurchaseClient({ suppliers, products }: { suppliers: any[], p
       supplierId: finalSupplierId,
       invoiceNumber,
       purchaseDate: new Date(purchaseDate),
-      paymentStatus,
+      paymentStatus: paymentStatus as "paid" | "pending" | "partial",
       subtotal: Math.round(subtotalBase * 100), // convert to paise
       discount: 0,
       cgst: Math.round(totalCgst * 100),

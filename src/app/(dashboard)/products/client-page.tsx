@@ -15,7 +15,6 @@ import { Search, Plus, Loader2, Pill, Power, Edit } from "lucide-react";
 import { addProduct, updateProduct, toggleProductStatus } from "@/app/actions/products";
 import Link from "next/link";
 
-import { useEffect } from "react";
 
 export function ProductsClient({ initialProducts }: { initialProducts: any[] }) {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -24,17 +23,6 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
   const [searchQuery, setSearchQuery] = useState("");
   
   const [editingId, setEditingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Auto-seed the database if it's mostly empty (less than the 20 sample items)
-    if (initialProducts.length < 20) {
-      fetch("/api/seed").then(res => res.json()).then(data => {
-        if (data.success) {
-          window.location.reload();
-        }
-      });
-    }
-  }, [initialProducts.length]);
 
   const [formData, setFormData] = useState({
     name: "",

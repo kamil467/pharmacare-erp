@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+const iconMap: Record<string, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
   LayoutDashboard,
   Receipt,
   Search,
@@ -53,7 +53,7 @@ export function Sidebar() {
   const userRole = session?.user?.role || "staff";
 
   const filteredNavItems = NAV_ITEMS.filter((item) =>
-    item.roles.includes(userRole)
+    (item.roles as readonly string[]).includes(userRole)
   );
 
   const isActive = (href: string) => {

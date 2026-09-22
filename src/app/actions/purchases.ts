@@ -73,11 +73,12 @@ export async function getPurchaseDetails(purchaseId: string) {
 export async function createPurchase(purchaseData: PurchaseInput, itemsData: PurchaseItemInput[]) {
   try {
     const parsedPurchase = purchaseSchema.parse(purchaseData);
+    const purchaseRow = { ...parsedPurchase, purchaseDate: new Date(parsedPurchase.purchaseDate) };
     const parsedItems = z.array(purchaseItemSchema).parse(itemsData);
 
     const result = await db.transaction(async (tx) => {
       // 1. Insert the purchase record
-      const [newPurchase] = await tx.insert(purchases).values(parsedPurchase).returning();
+      const [newPurchase] = await tx.insert(purchases).values(purchaseRow).returning();
 
       // 2. Process each item: Create/Update Batch and Insert Purchase Item
       for (const item of parsedItems) {
@@ -138,6 +139,7 @@ export async function createPurchase(purchaseData: PurchaseInput, itemsData: Pur
           ...item,
           purchaseId: newPurchase.id,
           batchId: currentBatchId,
+          totalAmount: item.purchaseRate * item.quantity,
         });
       }
 

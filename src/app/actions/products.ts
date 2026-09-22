@@ -24,12 +24,12 @@ export async function addProduct(data: ProductInput) {
     const parsedData = productSchema.parse(data);
     const newProduct = await db.insert(products).values({
       name: parsedData.name,
-      genericName: parsedData.genericName,
-      manufacturer: parsedData.manufacturer,
-      category: parsedData.category,
-      hsnCode: parsedData.hsnCode,
+      genericName: parsedData.genericName ?? undefined,
+      manufacturer: parsedData.manufacturer ?? undefined,
+      category: parsedData.category ?? "Other",
+      hsnCode: parsedData.hsnCode ?? undefined,
       gstRate: parsedData.gstRate,
-      packSize: parsedData.packSize,
+      packSize: parsedData.packSize ?? undefined,
       minStockLevel: parsedData.minStockLevel,
     }).returning();
 
@@ -46,12 +46,12 @@ export async function updateProduct(id: string, data: ProductInput) {
     const parsedData = productSchema.parse(data);
     await db.update(products).set({
       name: parsedData.name,
-      genericName: parsedData.genericName,
-      manufacturer: parsedData.manufacturer,
-      category: parsedData.category,
-      hsnCode: parsedData.hsnCode,
+      genericName: parsedData.genericName ?? undefined,
+      manufacturer: parsedData.manufacturer ?? undefined,
+      category: parsedData.category ?? "Other",
+      hsnCode: parsedData.hsnCode ?? undefined,
       gstRate: parsedData.gstRate,
-      packSize: parsedData.packSize,
+      packSize: parsedData.packSize ?? undefined,
       minStockLevel: parsedData.minStockLevel,
       updatedAt: new Date(),
     }).where(eq(products.id, id));
