@@ -62,13 +62,14 @@ export function SalesClient({ initialSales }: { initialSales: any[] }) {
                   <th className="text-left py-3 px-4 font-medium text-gray-500">Customer</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-500">Mode</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-500">Amount</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500">Profit</th>
                   <th className="text-center py-3 px-4 font-medium text-gray-500">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {initialSales.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-gray-500">No sales found.</td>
+                    <td colSpan={7} className="py-8 text-center text-gray-500">No sales found.</td>
                   </tr>
                 ) : (
                   initialSales.map((sale) => (
@@ -82,7 +83,10 @@ export function SalesClient({ initialSales }: { initialSales: any[] }) {
                       <td className="py-3 px-4">
                         <span className="capitalize px-2 py-1 bg-gray-100 text-gray-600 rounded text-[11px]">{sale.paymentMode}</span>
                       </td>
-                      <td className="py-3 px-4 text-right font-medium text-gray-900">₹{(sale.totalAmount / 100).toFixed(2)}</td>
+                    <td className="py-3 px-4 text-right font-medium text-gray-900">₹{(sale.totalAmount / 100).toFixed(2)}</td>
+                    <td className={`py-3 px-4 text-right font-medium ${sale.profitAmount >= 0 ? "text-green-600" : "text-red-600"}`}>
+                      {sale.profitAmount ? `₹${(sale.profitAmount / 100).toFixed(2)}` : "—"}
+                    </td>
                       <td className="py-3 px-4 text-center">
                         <Button variant="ghost" size="icon" onClick={() => handleViewDetails(sale)}>
                           <Eye className="w-4 h-4 text-brand-500" />
@@ -129,6 +133,12 @@ export function SalesClient({ initialSales }: { initialSales: any[] }) {
                 ))}
               </tbody>
             </table>
+            {saleDetails.length > 0 && saleDetails.some(item => item.profitAmount !== null) && (
+              <div className="mt-4 flex justify-end gap-6 border-t pt-4 text-sm">
+                <span className="text-gray-500">Cost: <strong className="text-gray-700">₹{(saleDetails.reduce((sum, item) => sum + (item.costAmount || 0), 0) / 100).toFixed(2)}</strong></span>
+                <span className="text-gray-500">Gross profit: <strong className="text-green-600">₹{(saleDetails.reduce((sum, item) => sum + (item.profitAmount || 0), 0) / 100).toFixed(2)}</strong></span>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

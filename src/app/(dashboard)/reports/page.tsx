@@ -1,7 +1,7 @@
 import { BarChart3, TrendingUp, Package, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/db";
-import { sales, purchases, batches } from "@/db/schema";
+import { sales, saleItems, purchases, batches } from "@/db/schema";
 import { sql } from "drizzle-orm";
 
 export default async function ReportsPage() {
@@ -19,6 +19,14 @@ export default async function ReportsPage() {
   }).from(batches);
   const inventoryValue = (inventoryValueResult[0]?.value || 0) / 100;
 
+  const profitResult = await db.select({
+    cost: sql<number>`COALESCE(SUM(${saleItems.costAmount}), 0)`.mapWith(Number),
+    profit: sql<number>`COALESCE(SUM(${saleItems.profitAmount}), 0)`.mapWith(Number),
+  }).from(saleItems);
+  const totalCost = (profitResult[0]?.cost || 0) / 100;
+  const grossProfit = (profitResult[0]?.profit || 0) / 100;
+  const grossMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
+
   return (
     <div className="space-y-8 animate-fade-in pb-20">
       <div>
@@ -29,7 +37,7 @@ export default async function ReportsPage() {
         <p className="text-gray-500 text-sm mt-1">Financial and inventory performance</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
@@ -41,6 +49,15 @@ export default async function ReportsPage() {
             <div className="text-2xl font-bold text-gray-900">₹{totalRevenue.toFixed(2)}</div>
             <p className="text-xs text-gray-400 mt-1">All time sales</p>
           </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-gray-500">Gross Profit</CardTitle></CardHeader>
+          <CardContent><div className="text-2xl font-bold text-green-600">₹{grossProfit.toFixed(2)}</div><p className="text-xs text-gray-400 mt-1">Revenue less product cost</p></CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-gray-500">Gross Margin</CardTitle></CardHeader>
+          <CardContent><div className="text-2xl font-bold text-gray-900">{grossMargin.toFixed(1)}%</div><p className="text-xs text-gray-400 mt-1">Before operating expenses</p></CardContent>
         </Card>
 
         <Card>

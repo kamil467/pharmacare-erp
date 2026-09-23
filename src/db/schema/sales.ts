@@ -34,6 +34,10 @@ export const saleItems = sqliteTable("sale_items", {
   sgstAmount: integer("sgst_amount").notNull().default(0), // SGST for this line item (in paise)
   igstAmount: integer("igst_amount").notNull().default(0), // IGST for this line item (in paise)
   totalAmount: integer("total_amount").notNull(), // total for this line item (in paise), usually quantity * saleRate (inclusive of tax)
+  // Snapshots preserve historical profitability when batch purchase rates change.
+  purchaseRateAtSale: integer("purchase_rate_at_sale"),
+  costAmount: integer("cost_amount"),
+  profitAmount: integer("profit_amount"),
 });
 
 export type Sale = typeof sales.$inferSelect;

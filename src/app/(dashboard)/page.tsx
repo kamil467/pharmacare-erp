@@ -11,7 +11,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { db } from "@/db";
-import { products, batches, sales, purchases, suppliers } from "@/db/schema";
+import { products, batches, sales, saleItems, purchases, suppliers } from "@/db/schema";
 import { eq, sql, and, gte, lte } from "drizzle-orm";
 
 export default async function DashboardPage() {
@@ -80,6 +80,17 @@ export default async function DashboardPage() {
 
   const monthlySales = monthlySalesQuery[0].total;
 
+  const profitQuery = await db.select({
+    total: sql<number>`COALESCE(SUM(${saleItems.profitAmount}), 0)`.mapWith(Number)
+  }).from(saleItems).innerJoin(sales, eq(saleItems.saleId, sales.id)).where(
+    and(gte(sales.invoiceDate, today), lte(sales.invoiceDate, tomorrow))
+  );
+  const monthlyProfitQuery = await db.select({
+    total: sql<number>`COALESCE(SUM(${saleItems.profitAmount}), 0)`.mapWith(Number)
+  }).from(saleItems).innerJoin(sales, eq(saleItems.saleId, sales.id)).where(
+    and(gte(sales.invoiceDate, firstDayOfMonth), lte(sales.invoiceDate, nextMonth))
+  );
+
   const recentSalesQuery = await db.select().from(sales).orderBy(sql`${sales.invoiceDate} DESC`).limit(5);
   
   const recentPurchasesQuery = await db.select({
@@ -112,6 +123,24 @@ export default async function DashboardPage() {
       icon: IndianRupee,
       iconBg: "bg-brand-50",
       iconColor: "text-brand-600",
+    },
+    {
+      title: "Today's Profit",
+      value: `₹${((profitQuery[0]?.total || 0) / 100).toFixed(2)}`,
+      change: "Gross profit",
+      changeType: "positive" as const,
+      icon: TrendingUp,
+      iconBg: "bg-green-50",
+      iconColor: "text-green-600",
+    },
+    {
+      title: "Monthly Profit",
+      value: `₹${((monthlyProfitQuery[0]?.total || 0) / 100).toFixed(2)}`,
+      change: "Gross profit",
+      changeType: "positive" as const,
+      icon: IndianRupee,
+      iconBg: "bg-green-50",
+      iconColor: "text-green-600",
     },
     {
       title: "Total Products",

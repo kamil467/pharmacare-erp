@@ -53,6 +53,10 @@ export async function createSale(data: SaleInput) {
       }).returning();
       
       const saleId = newSale.id;
+      const totalTaxableBeforeDiscount = parsedData.items.reduce((sum, item) => {
+        const baseRate = item.gstRate > 0 ? Math.round(item.saleRate / (1 + (item.gstRate / 100))) : item.saleRate;
+        return sum + baseRate * item.quantity;
+      }, 0);
       
       // Process Items with FEFO
       for (const item of parsedData.items) {
@@ -85,6 +89,13 @@ export async function createSale(data: SaleInput) {
           const taxAmt = item.saleRate - baseRate;
           const cgstAmt = Math.round(taxAmt / 2);
           const sgstAmt = taxAmt - cgstAmt;
+          const lineTaxableAmount = baseRate * deduction;
+          const itemTaxableAmount = baseRate * item.quantity;
+          const allocatedDiscount = totalTaxableBeforeDiscount > 0
+            ? Math.round(parsedData.discount * (itemTaxableAmount / totalTaxableBeforeDiscount) * (deduction / item.quantity))
+            : 0;
+          const costAmount = batch.purchaseRate * deduction;
+          const profitAmount = lineTaxableAmount - allocatedDiscount - costAmount;
           
           // Insert sale item
           await tx.insert(saleItems).values({
@@ -100,6 +111,9 @@ export async function createSale(data: SaleInput) {
             sgstAmount: sgstAmt * deduction,
             igstAmount: 0,
             totalAmount: item.saleRate * deduction,
+            purchaseRateAtSale: batch.purchaseRate,
+            costAmount,
+            profitAmount,
           });
         }
         
@@ -129,7 +143,20 @@ export async function createSale(data: SaleInput) {
 
 export async function getSales() {
   try {
-    const results = await db.select().from(sales).orderBy(sql`${sales.invoiceDate} DESC`).limit(100);
+    const results = await db.select({
+      id: sales.id,
+      invoiceNumber: sales.invoiceNumber,
+      invoiceDate: sales.invoiceDate,
+      customerName: sales.customerName,
+      customerPhone: sales.customerPhone,
+      paymentMode: sales.paymentMode,
+      subtotal: sales.subtotal,
+      cgst: sales.cgst,
+      sgst: sales.sgst,
+      igst: sales.igst,
+      totalAmount: sales.totalAmount,
+      profitAmount: sql<number>`COALESCE((SELECT SUM(${saleItems.profitAmount}) FROM sale_items WHERE sale_items.sale_id = ${sales.id}), 0)`.mapWith(Number),
+    }).from(sales).orderBy(sql`${sales.invoiceDate} DESC`).limit(100);
     return { data: results };
   } catch (error) {
     return { error: "Failed to fetch sales" };
@@ -230,6 +257,9 @@ export async function getSaleDetails(saleId: string) {
       mrp: saleItems.mrp,
       gstRate: saleItems.gstRate,
       taxableAmount: saleItems.taxableAmount,
+      purchaseRateAtSale: saleItems.purchaseRateAtSale,
+      costAmount: saleItems.costAmount,
+      profitAmount: saleItems.profitAmount,
       cgstAmount: saleItems.cgstAmount,
       sgstAmount: saleItems.sgstAmount,
       totalAmount: saleItems.totalAmount,
